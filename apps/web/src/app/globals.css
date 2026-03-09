@@ -1,0 +1,166 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-body text-cocoa bg-cream;
+  }
+  
+  .dark body,
+  body.dark {
+    @apply bg-dark-bg text-dark-text;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-rose text-white px-6 py-2.5 rounded-bubble font-display font-semibold
+           hover:bg-berry transition-all duration-200 shadow-soft hover:shadow-glow
+           active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-lilac text-plum px-6 py-2.5 rounded-bubble font-display font-semibold
+           hover:bg-lavender transition-all duration-200
+           active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply text-cocoa px-4 py-2 rounded-bubble font-display font-medium
+           hover:bg-blush transition-all duration-200
+           active:scale-95;
+  }
+
+  .card {
+    @apply bg-white rounded-cute p-5 shadow-card border border-blush/50
+           transition-all duration-200 hover:shadow-glow;
+  }
+
+  .dark .card {
+    @apply bg-dark-card border-dark-border;
+  }
+
+  .input-field {
+    @apply w-full border-2 border-blush rounded-cute px-4 py-2.5 font-body
+           focus:outline-none focus:border-rose focus:ring-2 focus:ring-rose/20
+           placeholder:text-rose/40 transition-all bg-white;
+  }
+
+  .dark .input-field {
+    @apply bg-dark-surface border-dark-border text-dark-text 
+           focus:border-lavender focus:ring-lavender/20 placeholder:text-dark-text/30;
+  }
+}
+
+/* TipTap editor styles */
+.tiptap-editor .ProseMirror {
+  @apply outline-none min-h-[60vh] font-writing leading-relaxed;
+}
+
+.tiptap-editor .ProseMirror p {
+  @apply mb-4;
+}
+
+.tiptap-editor .ProseMirror h1 {
+  @apply text-3xl font-display font-bold mb-4 text-cocoa;
+}
+
+.tiptap-editor .ProseMirror h2 {
+  @apply text-2xl font-display font-bold mb-3 text-cocoa;
+}
+
+.tiptap-editor .ProseMirror h3 {
+  @apply text-xl font-display font-semibold mb-2 text-cocoa;
+}
+
+.tiptap-editor .ProseMirror blockquote {
+  @apply border-l-4 border-rose pl-4 italic text-cocoa/70 my-4;
+}
+
+.tiptap-editor .ProseMirror ul {
+  @apply list-disc pl-6 mb-4;
+}
+
+.tiptap-editor .ProseMirror ol {
+  @apply list-decimal pl-6 mb-4;
+}
+
+.tiptap-editor .ProseMirror hr {
+  @apply border-blush my-6;
+}
+
+.dark .tiptap-editor .ProseMirror h1,
+.dark .tiptap-editor .ProseMirror h2,
+.dark .tiptap-editor .ProseMirror h3 {
+  @apply text-dark-text;
+}
+
+.dark .tiptap-editor .ProseMirror blockquote {
+  @apply border-lavender text-dark-text/70;
+}
+
+/* Editor images */
+.tiptap-editor .ProseMirror .editor-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  margin: 1rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tiptap-editor .ProseMirror .editor-image.ProseMirror-selectednode {
+  outline: 3px solid #f4a7bb;
+  outline-offset: 2px;
+}
+
+.dark .tiptap-editor .ProseMirror .editor-image.ProseMirror-selectednode {
+  outline-color: #C8A2E8;
+}
+
+/* Focus mode */
+.focus-mode .ProseMirror {
+  @apply max-w-2xl mx-auto;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-cream;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-rose/30 rounded-full hover:bg-rose/50;
+}
+
+.dark ::-webkit-scrollbar-track {
+  @apply bg-dark-bg;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-lavender/30 hover:bg-lavender/50;
+}
+
+/* Cute floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Selection color */
+::selection {
+  @apply bg-rose/30 text-cocoa;
+}
+
+.dark ::selection {
+  @apply bg-lavender/30 text-dark-text;
+}
