@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import toast from 'react-hot-toast'
 
@@ -146,9 +146,11 @@ export function CreateBookModal({ open, onClose, onCreated }: Props) {
           <button
             type="submit"
             disabled={loading || !title.trim()}
-            className="btn-primary w-full disabled:opacity-50"
+            className="btn-primary w-full disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {loading ? 'Criando...' : 'Criar Livro ✨'}
+            {loading ? (
+              <><Loader2 size={16} className="animate-spin" /> Criando...</>
+            ) : 'Criar Livro ✨'}
           </button>
         </form>
       </div>

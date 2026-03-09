@@ -7,7 +7,7 @@ import { api, Book, Chapter } from '@/lib/api'
 import {
   Plus, ArrowLeft, Trash2, Edit3, GripVertical,
   BookOpen, FileText, Check, RotateCcw, MoreHorizontal, ImageIcon, X,
-  FileDown, Printer
+  FileDown, Printer, Loader2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
@@ -40,6 +40,14 @@ export default function BookPage() {
   const [synopsis, setSynopsis] = useState('')
   const [bookStatus, setBookStatus] = useState<'DRAFT' | 'IN_PROGRESS' | 'COMPLETED'>('DRAFT')
   const [uploadingCover, setUploadingCover] = useState(false)
+  const [removingCover, setRemovingCover] = useState(false)
+  const [savingTitle, setSavingTitle] = useState(false)
+  const [savingInfo, setSavingInfo] = useState(false)
+  const [creatingChapter, setCreatingChapter] = useState(false)
+  const [deletingChapterId, setDeletingChapterId] = useState<string | null>(null)
+  const [deletingBook, setDeletingBook] = useState(false)
+  const [exportingHTML, setExportingHTML] = useState(false)
+  const [exportingPDF, setExportingPDF] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const coverInputRef = useRef<HTMLInputElement>(null)
 
@@ -62,12 +70,15 @@ export default function BookPage() {
   }
 
   const handleRemoveCover = async () => {
+    setRemovingCover(true)
     try {
       await api.updateBook(bookId, { coverUrl: '' })
       await loadBook()
       toast.success('Capa removida')
     } catch {
       toast.error('Erro ao remover capa')
+    } finally {
+      setRemovingCover(false)
     }
   }
 
@@ -95,17 +106,21 @@ export default function BookPage() {
       setEditingTitle(false)
       return
     }
+    setSavingTitle(true)
     try {
       await api.updateBook(bookId, { title })
       toast.success('Título atualizado! ✨')
       loadBook()
     } catch {
       toast.error('Erro ao atualizar')
+    } finally {
+      setSavingTitle(false)
+      setEditingTitle(false)
     }
-    setEditingTitle(false)
   }
 
   const handleUpdateBookInfo = async () => {
+    setSavingInfo(true)
     try {
       await api.updateBook(bookId, { synopsis, status: bookStatus })
       toast.success('Livro atualizado! ✨')
@@ -113,11 +128,14 @@ export default function BookPage() {
       loadBook()
     } catch {
       toast.error('Erro ao atualizar')
+    } finally {
+      setSavingInfo(false)
     }
   }
 
   const handleCreateChapter = async () => {
     if (!newChapterTitle.trim()) return
+    setCreatingChapter(true)
     try {
       await api.createChapter({ title: newChapterTitle, bookId })
       toast.success('Capítulo criado! 📄')
@@ -126,47 +144,60 @@ export default function BookPage() {
       loadBook()
     } catch {
       toast.error('Erro ao criar capítulo')
+    } finally {
+      setCreatingChapter(false)
     }
   }
 
   const handleDeleteChapter = async (chapterId: string, chapterTitle: string) => {
     if (!confirm(`Deletar "${chapterTitle}"? Essa ação não pode ser desfeita.`)) return
+    setDeletingChapterId(chapterId)
     try {
       await api.deleteChapter(chapterId)
       toast.success('Capítulo deletado')
       loadBook()
     } catch {
       toast.error('Erro ao deletar')
+    } finally {
+      setDeletingChapterId(null)
     }
   }
 
   const handleDeleteBook = async () => {
     if (!confirm(`Deletar "${book?.title}"? Todos os capítulos serão perdidos!`)) return
+    setDeletingBook(true)
     try {
       await api.deleteBook(bookId)
       toast.success('Livro deletado')
       router.push('/library')
     } catch {
       toast.error('Erro ao deletar livro')
+      setDeletingBook(false)
     }
   }
 
   const handleExportHTML = async () => {
     setShowExportMenu(false)
+    setExportingHTML(true)
     try {
       await api.exportBookHTML(bookId, book!.title)
       toast.success('Exportado como HTML! 📄')
     } catch (e: unknown) {
       toast.error((e instanceof Error ? e.message : null) || 'Erro ao exportar')
+    } finally {
+      setExportingHTML(false)
     }
   }
 
   const handleExportPDF = async () => {
     setShowExportMenu(false)
+    setExportingPDF(true)
     try {
       await api.exportBookPDF(bookId)
     } catch (e: unknown) {
       toast.error((e instanceof Error ? e.message : null) || 'Erro ao exportar')
+    } finally {
+      setExportingPDF(false)
     }
   }
 
@@ -229,7 +260,9 @@ export default function BookPage() {
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                   {uploadingCover ? (
-                    <span className="text-white text-xs font-display animate-pulse">Enviando...</span>
+                    <span className="text-white text-xs font-display flex items-center gap-1">
+                      <Loader2 size={14} className="animate-spin" /> Enviando...
+                    </span>
                   ) : (
                     <div className="text-center">
                       <ImageIcon size={20} className="text-white mx-auto mb-1" />
@@ -245,10 +278,11 @@ export default function BookPage() {
               {book.coverUrl && (
                 <button
                   onClick={(e) => { e.stopPropagation(); handleRemoveCover() }}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                  disabled={removingCover}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-400 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm disabled:opacity-60"
                   title="Remover capa"
                 >
-                  <X size={12} />
+                  {removingCover ? <Loader2 size={10} className="animate-spin" /> : <X size={12} />}
                 </button>
               )}
             </div>
@@ -264,8 +298,8 @@ export default function BookPage() {
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && handleUpdateTitle()}
                   />
-                  <button onClick={handleUpdateTitle} className="btn-primary !px-4">
-                    <Check size={16} />
+                  <button onClick={handleUpdateTitle} disabled={savingTitle} className="btn-primary !px-4 disabled:opacity-60">
+                    {savingTitle ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                   </button>
                 </div>
               ) : (
@@ -314,10 +348,11 @@ export default function BookPage() {
                 <div className="relative">
                   <button
                     onClick={() => setShowExportMenu(v => !v)}
-                    className="btn-ghost text-sm flex items-center gap-1"
+                    disabled={exportingHTML || exportingPDF}
+                    className="btn-ghost text-sm flex items-center gap-1 disabled:opacity-60"
                   >
-                    <FileDown size={14} />
-                    Exportar
+                    {(exportingHTML || exportingPDF) ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+                    {exportingHTML ? 'Exportando...' : exportingPDF ? 'Preparando...' : 'Exportar'}
                   </button>
                   {showExportMenu && (
                     <>
@@ -329,16 +364,18 @@ export default function BookPage() {
                       <div className="absolute left-0 top-full mt-1 z-20 bg-white dark:bg-dark-card border border-rose/20 rounded-xl shadow-soft w-48 py-1 text-sm">
                         <button
                           onClick={handleExportHTML}
-                          className="w-full flex items-center gap-2 px-4 py-2 hover:bg-cream dark:hover:bg-dark-hover transition-colors text-cocoa dark:text-dark-text"
+                          disabled={exportingHTML}
+                          className="w-full flex items-center gap-2 px-4 py-2 hover:bg-cream dark:hover:bg-dark-hover transition-colors text-cocoa dark:text-dark-text disabled:opacity-50"
                         >
-                          <FileDown size={14} className="text-berry" />
+                          {exportingHTML ? <Loader2 size={14} className="animate-spin text-berry" /> : <FileDown size={14} className="text-berry" />}
                           Baixar como HTML
                         </button>
                         <button
                           onClick={handleExportPDF}
-                          className="w-full flex items-center gap-2 px-4 py-2 hover:bg-cream dark:hover:bg-dark-hover transition-colors text-cocoa dark:text-dark-text"
+                          disabled={exportingPDF}
+                          className="w-full flex items-center gap-2 px-4 py-2 hover:bg-cream dark:hover:bg-dark-hover transition-colors text-cocoa dark:text-dark-text disabled:opacity-50"
                         >
-                          <Printer size={14} className="text-berry" />
+                          {exportingPDF ? <Loader2 size={14} className="animate-spin text-berry" /> : <Printer size={14} className="text-berry" />}
                           Imprimir / Salvar PDF
                         </button>
                       </div>
@@ -348,10 +385,11 @@ export default function BookPage() {
 
                 <button
                   onClick={handleDeleteBook}
-                  className="btn-ghost text-sm flex items-center gap-1 text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  disabled={deletingBook}
+                  className="btn-ghost text-sm flex items-center gap-1 text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-60"
                 >
-                  <Trash2 size={14} />
-                  Deletar livro
+                  {deletingBook ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  {deletingBook ? 'Deletando...' : 'Deletar livro'}
                 </button>
               </div>
             </div>
@@ -392,10 +430,11 @@ export default function BookPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={handleUpdateBookInfo} className="btn-primary text-sm">
-                  Salvar ✨
+                <button onClick={handleUpdateBookInfo} disabled={savingInfo} className="btn-primary text-sm flex items-center gap-1.5 disabled:opacity-60">
+                  {savingInfo && <Loader2 size={13} className="animate-spin" />}
+                  {savingInfo ? 'Salvando...' : 'Salvar ✨'}
                 </button>
-                <button onClick={() => setEditingBookInfo(false)} className="btn-ghost text-sm">
+                <button onClick={() => setEditingBookInfo(false)} disabled={savingInfo} className="btn-ghost text-sm">
                   Cancelar
                 </button>
               </div>
@@ -429,11 +468,13 @@ export default function BookPage() {
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleCreateChapter()}
               />
-              <button onClick={handleCreateChapter} className="btn-primary !px-4 text-sm">
-                Criar
+              <button onClick={handleCreateChapter} disabled={creatingChapter} className="btn-primary !px-4 text-sm flex items-center gap-1.5 disabled:opacity-60">
+                {creatingChapter && <Loader2 size={13} className="animate-spin" />}
+                {creatingChapter ? 'Criando...' : 'Criar'}
               </button>
               <button
                 onClick={() => { setShowCreateChapter(false); setNewChapterTitle('') }}
+                disabled={creatingChapter}
                 className="btn-ghost text-sm"
               >
                 Cancelar
@@ -485,10 +526,11 @@ export default function BookPage() {
                     </Link>
                     <button
                       onClick={() => handleDeleteChapter(chapter.id, chapter.title)}
-                      className="p-2 rounded-cute hover:bg-red-50 dark:hover:bg-red-900/20 text-cocoa/40 hover:text-red-500 transition-all"
+                      disabled={deletingChapterId === chapter.id}
+                      className="p-2 rounded-cute hover:bg-red-50 dark:hover:bg-red-900/20 text-cocoa/40 hover:text-red-500 transition-all disabled:opacity-60"
                       title="Deletar"
                     >
-                      <Trash2 size={16} />
+                      {deletingChapterId === chapter.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                     </button>
                   </div>
                 </div>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { api, UserSettings } from '@/lib/api'
 import { useTheme } from '@/hooks/useTheme'
-import { Moon, Sun, Type, Monitor } from 'lucide-react'
+import { Moon, Sun, Type, Monitor, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const FONTS = [
@@ -22,6 +22,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [fontFamily, setFontFamily] = useState('Georgia')
   const [fontSize, setFontSize] = useState(16)
   const [focusModeFont, setFocusModeFont] = useState('Georgia')
@@ -53,6 +54,7 @@ export default function SettingsPage() {
   }, [])
 
   const handleSave = async () => {
+    setSaving(true)
     try {
       await api.updateSettings({
         name,
@@ -65,6 +67,8 @@ export default function SettingsPage() {
       toast.success('Configurações salvas! ⚙️✨')
     } catch {
       toast.error('Erro ao salvar')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -255,9 +259,11 @@ export default function SettingsPage() {
 
             <button
               onClick={handleSave}
-              className="btn-primary w-full !py-3 text-lg"
+              disabled={saving}
+              className="btn-primary w-full !py-3 text-lg flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              Salvar Configurações ✨
+              {saving && <Loader2 size={18} className="animate-spin" />}
+              {saving ? 'Salvando...' : 'Salvar Configurações ✨'}
             </button>
           </div>
         )}

@@ -6,7 +6,7 @@ import { api, Chapter, ChapterVersion } from '@/lib/api'
 import { TipTapEditor } from '@/components/editor/TipTapEditor'
 import {
   ArrowLeft, Save, Eye, EyeOff, Clock, RotateCcw,
-  FileText, Check, MessageSquare, X, History, Maximize, Minimize
+  FileText, Check, MessageSquare, X, History, Maximize, Minimize, Loader2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
@@ -27,6 +27,9 @@ export default function ChapterEditorPage() {
   const [notes, setNotes] = useState('')
   const [chapterStatus, setChapterStatus] = useState<'DRAFT' | 'REVISION' | 'COMPLETED'>('DRAFT')
   const [contentKey, setContentKey] = useState(0)
+  const [savingVersion, setSavingVersion] = useState(false)
+  const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null)
+  const [savingNotes, setSavingNotes] = useState(false)
 
   // User font settings
   const [fontFamily, setFontFamily] = useState('Georgia')
@@ -108,17 +111,21 @@ export default function ChapterEditorPage() {
   }
 
   const handleSaveVersion = async () => {
+    setSavingVersion(true)
     try {
       await api.saveVersion(chapterId)
       toast.success('Versão salva! 📸')
       loadChapter()
     } catch {
       toast.error('Erro ao salvar versão')
+    } finally {
+      setSavingVersion(false)
     }
   }
 
   const handleRestoreVersion = async (versionId: string) => {
     if (!confirm('Restaurar esta versão? O conteúdo atual será substituído.')) return
+    setRestoringVersionId(versionId)
     try {
       await api.restoreVersion(chapterId, versionId)
       toast.success('Versão restaurada! ✨')
@@ -127,15 +134,20 @@ export default function ChapterEditorPage() {
       setShowVersions(false)
     } catch {
       toast.error('Erro ao restaurar')
+    } finally {
+      setRestoringVersionId(null)
     }
   }
 
   const handleSaveNotes = async () => {
+    setSavingNotes(true)
     try {
       await api.updateChapter(chapterId, { notes })
       toast.success('Notas salvas! 📝')
     } catch {
       toast.error('Erro ao salvar notas')
+    } finally {
+      setSavingNotes(false)
     }
   }
 
@@ -246,18 +258,20 @@ export default function ChapterEditorPage() {
 
             <button
               onClick={handleManualSave}
-              className="btn-primary text-sm !px-4 !py-2"
+              disabled={saving}
+              className="btn-primary text-sm !px-4 !py-2 flex items-center gap-1.5 disabled:opacity-60"
             >
-              <Save size={14} className="inline mr-1" />
-              Salvar
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              {saving ? 'Salvando...' : 'Salvar'}
             </button>
 
             <button
               onClick={handleSaveVersion}
-              className="btn-secondary text-sm !px-4 !py-2"
+              disabled={savingVersion}
+              className="btn-secondary text-sm !px-4 !py-2 flex items-center justify-center disabled:opacity-60"
               title="Salvar versão (snapshot)"
             >
-              📸
+              {savingVersion ? <Loader2 size={14} className="animate-spin" /> : '📸'}
             </button>
           </div>
         </div>
@@ -298,8 +312,9 @@ export default function ChapterEditorPage() {
                   className="input-field !h-40 resize-none text-sm"
                   placeholder="Anotações, ideias, lembretes..."
                 />
-                <button onClick={handleSaveNotes} className="btn-secondary text-xs mt-2 w-full">
-                  Salvar notas 💾
+                <button onClick={handleSaveNotes} disabled={savingNotes} className="btn-secondary text-xs mt-2 w-full flex items-center justify-center gap-1.5 disabled:opacity-60">
+                  {savingNotes ? <Loader2 size={12} className="animate-spin" /> : null}
+                  {savingNotes ? 'Salvando...' : 'Salvar notas 💾'}
                 </button>
               </div>
             )}
@@ -334,10 +349,11 @@ export default function ChapterEditorPage() {
                           </div>
                           <button
                             onClick={() => handleRestoreVersion(version.id)}
-                            className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-dark-surface text-cocoa/40 hover:text-berry transition-all"
+                            disabled={restoringVersionId === version.id}
+                            className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-dark-surface text-cocoa/40 hover:text-berry transition-all disabled:opacity-60"
                             title="Restaurar"
                           >
-                            <RotateCcw size={14} />
+                            {restoringVersionId === version.id ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
                           </button>
                         </div>
                       </div>
