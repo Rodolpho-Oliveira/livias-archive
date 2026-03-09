@@ -6,7 +6,8 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { api, Book, Chapter } from '@/lib/api'
 import {
   Plus, ArrowLeft, Trash2, Edit3, GripVertical,
-  BookOpen, FileText, Check, RotateCcw, MoreHorizontal, ImageIcon, X
+  BookOpen, FileText, Check, RotateCcw, MoreHorizontal, ImageIcon, X,
+  FileDown, Printer
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
@@ -39,6 +40,7 @@ export default function BookPage() {
   const [synopsis, setSynopsis] = useState('')
   const [bookStatus, setBookStatus] = useState<'DRAFT' | 'IN_PROGRESS' | 'COMPLETED'>('DRAFT')
   const [uploadingCover, setUploadingCover] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
   const coverInputRef = useRef<HTMLInputElement>(null)
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,6 +148,25 @@ export default function BookPage() {
       router.push('/library')
     } catch {
       toast.error('Erro ao deletar livro')
+    }
+  }
+
+  const handleExportHTML = async () => {
+    setShowExportMenu(false)
+    try {
+      await api.exportBookHTML(bookId, book!.title)
+      toast.success('Exportado como HTML! 📄')
+    } catch (e: unknown) {
+      toast.error((e instanceof Error ? e.message : null) || 'Erro ao exportar')
+    }
+  }
+
+  const handleExportPDF = async () => {
+    setShowExportMenu(false)
+    try {
+      await api.exportBookPDF(bookId)
+    } catch (e: unknown) {
+      toast.error((e instanceof Error ? e.message : null) || 'Erro ao exportar')
     }
   }
 
@@ -288,6 +309,43 @@ export default function BookPage() {
                   <Edit3 size={14} />
                   Editar info
                 </button>
+
+                {/* Export dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowExportMenu(v => !v)}
+                    className="btn-ghost text-sm flex items-center gap-1"
+                  >
+                    <FileDown size={14} />
+                    Exportar
+                  </button>
+                  {showExportMenu && (
+                    <>
+                      {/* Backdrop */}
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setShowExportMenu(false)}
+                      />
+                      <div className="absolute left-0 top-full mt-1 z-20 bg-white dark:bg-dark-card border border-rose/20 rounded-xl shadow-soft w-48 py-1 text-sm">
+                        <button
+                          onClick={handleExportHTML}
+                          className="w-full flex items-center gap-2 px-4 py-2 hover:bg-cream dark:hover:bg-dark-hover transition-colors text-cocoa dark:text-dark-text"
+                        >
+                          <FileDown size={14} className="text-berry" />
+                          Baixar como HTML
+                        </button>
+                        <button
+                          onClick={handleExportPDF}
+                          className="w-full flex items-center gap-2 px-4 py-2 hover:bg-cream dark:hover:bg-dark-hover transition-colors text-cocoa dark:text-dark-text"
+                        >
+                          <Printer size={14} className="text-berry" />
+                          Imprimir / Salvar PDF
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
                 <button
                   onClick={handleDeleteBook}
                   className="btn-ghost text-sm flex items-center gap-1 text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"

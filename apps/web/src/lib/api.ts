@@ -118,6 +118,38 @@ export const api = {
   updateSettings: (data: Partial<UserSettings>) =>
     request<UserSettings>('/me/settings', { method: 'PUT', body: JSON.stringify(data) }),
 
+  // Export
+  exportBookHTML: async (bookId: string, bookTitle: string): Promise<void> => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`${API_URL}/api/books/${bookId}/export/html`, {
+      headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+    })
+    if (!res.ok) throw new Error('Export failed')
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${bookTitle.replace(/[^a-z0-9]/gi, '_')}.html`
+    a.click()
+    URL.revokeObjectURL(url)
+  },
+  exportBookPDF: async (bookId: string): Promise<void> => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`${API_URL}/api/books/${bookId}/export/html`, {
+      headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+    })
+    if (!res.ok) throw new Error('Export failed')
+    const html = await res.text()
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) throw new Error('Popup bloqueado pelo navegador. Permita pop-ups para exportar.')
+    printWindow.document.write(html)
+    printWindow.document.close()
+    printWindow.addEventListener('load', () => {
+      printWindow.focus()
+      printWindow.print()
+    })
+  },
+
   // Upload
   uploadImage: async (file: File): Promise<string> => {
     const { data: { session } } = await supabase.auth.getSession()
