@@ -6,10 +6,6 @@
     "apps/*",
     "packages/*"
   ],
-  "overrides": {
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
-  },
   "scripts": {
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "npm run dev --workspace=apps/api",
